@@ -55,12 +55,7 @@ def prepare_environment():
     return
 
 
-model_filenames = [
-    ('sd_xl_base_1.0_0.9vae.safetensors',
-     'https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0_0.9vae.safetensors'),
-    ('sd_xl_refiner_1.0_0.9vae.safetensors',
-     'https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/sd_xl_refiner_1.0_0.9vae.safetensors')
-]
+model_filenames = []
 
 lora_filenames = [
     ('sd_xl_offset_example-lora_1.0.safetensors',
@@ -80,7 +75,11 @@ controlnet_filenames = [
     ('control-lora-depth-rank128.safetensors',
      'https://huggingface.co/stabilityai/control-lora/resolve/main/control-LoRAs-rank128/control-lora-depth-rank128.safetensors'),
     ('control-lora-depth-rank256.safetensors',
-     'https://huggingface.co/stabilityai/control-lora/resolve/main/control-LoRAs-rank256/control-lora-depth-rank256.safetensors')
+     'https://huggingface.co/stabilityai/control-lora/resolve/main/control-LoRAs-rank256/control-lora-depth-rank256.safetensors'),
+    ('diffusers_xl_canny_small.safetensors',
+     'https://huggingface.co/lllyasviel/sd_control_collection/blob/main/diffusers_xl_canny_small.safetensors'),
+    ('diffusers_xl_depth_full.safetensors',
+     'https://huggingface.co/lllyasviel/sd_control_collection/blob/main/diffusers_xl_depth_full.safetensors')
 ]
 
 vae_approx_filenames = [

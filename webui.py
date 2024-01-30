@@ -602,6 +602,8 @@ with shared.gradio_root:
             else:
                 return gr.update()
 
+        # Handles input images coming from revision or output as inputs. Gracefully handles
+        # no image(s) provided despite having img2img enabled by the user.
         def verify_input(img2img, canny, depth, gallery_in, gallery_rev, gallery_out):
             if (img2img or canny or depth) and len(gallery_in) == 0:
                 if len(gallery_rev) > 0:
@@ -631,6 +633,17 @@ with shared.gradio_root:
         ctrls += [uov_method, uov_input_image]
         ctrls += [outpaint_selections, inpaint_input_image]
         ctrls += [style_iterator]
+
+        # When users click the generate button do all the following asynchronously:
+        # 1. Attach listener to STOP, GENERATE or OUTPUT GALLERY buttons.
+        # 2. Call "refresh_seed" (w/ inputs) and ouputs results to image_seed.
+        # 3. Checks if "Enhanced image" is enabled and adjusts img2img_mode accordingly.
+        # 4. Verify input images are properly provided by the users (from output or revision)
+        #    img2img_mode, control_lora_canny and control_lora_depth are boolean checkboxes.
+        # 5. Handle revision images being inputted as prompts.
+        # 6. Call "generate_clicked" and passes in all the info required in "ctrls" variable.
+        # 7. ???
+        # 8. Plays notification.mp3 when everything is done.
         generate_button.click(lambda: (gr.update(visible=True, interactive=True), gr.update(visible=False), []), outputs=[stop_button, generate_button, output_gallery]) \
             .then(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed) \
             .then(fn=verify_enhance_image, inputs=[input_image_checkbox, img2img_mode], outputs=[img2img_mode]) \
@@ -649,5 +662,5 @@ with shared.gradio_root:
 
 
 app = gr.mount_gradio_app(app, shared.gradio_root, '/')
-shared.gradio_root.launch(inbrowser=True, server_name=args.listen, server_port=args.port, share=args.share,
+shared.gradio_root.launch(inbrowser=False, server_name=args.listen, server_port=args.port, share=args.share,
     auth=check_auth if args.share and auth_enabled else None, allowed_paths=[modules.path.temp_outputs_path])
