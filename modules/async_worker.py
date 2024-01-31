@@ -37,7 +37,11 @@ def worker():
     from modules.upscaler import perform_upscale
 
     try:
+        # gradio_root refers to the gradio app which is mounted in webui.py with:
+        # app = gr.mount_gradio_app(app, shared.gradio_root, '/')
         async_gradio_app = shared.gradio_root
+
+        # Print startup message:
         flag = f'''App started successful. Use the app with {str(async_gradio_app.local_url)} or {str(async_gradio_app.server_name)}:{str(async_gradio_app.server_port)}'''
         if async_gradio_app.share:
             flag += f''' or {async_gradio_app.share_url}'''
@@ -45,7 +49,7 @@ def worker():
     except Exception as e:
         print(e)
 
-
+    # Returns an image object. Used by img2img and revision. 
     def get_image(path, megapixels=1.0):
         image = None
         with open(path, 'rb') as image_file:
@@ -63,10 +67,12 @@ def worker():
         print(f'[Fooocus] {text}')
         outputs.append(['preview', (number, text, None)])
 
-
+    # The following is executed in an infinite loop. A task object is popped from the buffer[]
+    # array and fed into this function.
     @torch.no_grad()
     @torch.inference_mode()
     def handler(task):
+        # Extract all fields from object in buffer[]:
         prompt, negative_prompt, style_selections, performance, resolution, image_number, image_seed, \
         sharpness, sampler_name, scheduler, custom_steps, custom_switch, cfg, \
         base_model_name, refiner_model_name, base_clip_skip, refiner_clip_skip, \
@@ -484,7 +490,8 @@ def worker():
             try:
                 execution_start_time = time.perf_counter()
 
-                imgs = pipeline.process_diffusion(
+                # Image diffusion starts here!
+                imgs = pipeline.process_diffusion( # Function in modules/default_pipeline.py
                     positive_cond=task['c'],
                     negative_cond=task['uc'],
                     steps=steps,
@@ -562,6 +569,7 @@ def worker():
                 metadata_string = json.dumps(metadata, ensure_ascii=False)
                 metadata_strings.append(metadata_string)
     
+                # Save to log:
                 for x in imgs:
                     d = [
                         ('Prompt', raw_prompt),
@@ -599,6 +607,8 @@ def worker():
                 print('User stopped')
                 break
 
+        # Pass all results to output[] which is read by webui.py in an infinite loop with        
+        # the following: if len(worker.outputs) > 0
         outputs.append(['metadatas', metadata_strings])
         outputs.append(['results', results])
 

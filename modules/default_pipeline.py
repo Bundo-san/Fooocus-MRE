@@ -324,7 +324,7 @@ refresh_everything(
 
 expansion = FooocusExpansion()
 
-
+# Applies a patch that adjusts the model's CFG's values?
 @torch.no_grad()
 @torch.inference_mode()
 def patch_all_models():
@@ -334,6 +334,7 @@ def patch_all_models():
     xl_base.unet.model_options['sampler_cfg_function'] = cfg_patched
     xl_base.unet.model_options['model_function_wrapper'] = patched_model_function
 
+    # Applies some black-magic secret sauce to the CFG value: 
     xl_base_patched.unet.model_options['sampler_cfg_function'] = cfg_patched
     xl_base_patched.unet.model_options['model_function_wrapper'] = patched_model_function
 
@@ -352,32 +353,39 @@ def process_diffusion(positive_cond, negative_cond, steps, switch, width, height
 
     patch_all_models()
 
+    # If refiner selected, then move it into SWAP memory temporarily:
     if xl_refiner is not None:
         virtual_memory.try_move_to_virtual_memory(xl_refiner.unet.model)
     virtual_memory.load_from_virtual_memory(xl_base.unet.model)
 
+    # If img2img input provided, encode the jpg/png into latent space. Otherwise, use randomly
+    # generated latent noise.
     if img2img and input_image != None:
         initial_latent = core.encode_vae(vae=xl_base_patched.vae, pixels=input_image)
         force_full_denoise = False
-    elif latent is None:
+    elif latent is None: # Doesn't actually get executed since a latent is always provided.
         initial_latent = core.generate_empty_latent(width=width, height=height, batch_size=1)
         force_full_denoise = True
     else:
         initial_latent = latent
         force_full_denoise = False
 
+    # User-provided prompts:
     positive_conditions = positive_cond[0]
     negative_conditions = negative_cond[0]
 
+    # Generate canny image to feed into canny ControlNet:
     if control_lora_canny and input_image != None:
         edges_image = core.detect_edge(input_image, canny_edge_low, canny_edge_high)
-        positive_conditions, negative_conditions = core.apply_controlnet(positive_conditions, negative_conditions,
-            controlnet_canny, edges_image, canny_strength, canny_start, canny_stop)
+        positive_conditions, negative_conditions = core.apply_controlnet(positive_conditions,
+            negative_conditions, controlnet_canny, edges_image, canny_strength, canny_start, canny_stop)
 
+    # Feed image into depth ControlNet:
     if control_lora_depth and input_image != None:
-        positive_conditions, negative_conditions = core.apply_controlnet(positive_conditions, negative_conditions,
-            controlnet_depth, input_image, depth_strength, depth_start, depth_stop)
+        positive_conditions, negative_conditions = core.apply_controlnet(positive_conditions, 
+            negative_conditions, controlnet_depth, input_image, depth_strength, depth_start, depth_stop)
 
+    # Set prompts for the refiner as needed:
     if xl_refiner is not None and is_base_sdxl():
         positive_conditions_refiner = positive_cond[1]
         negative_conditions_refiner = negative_cond[1]

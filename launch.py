@@ -29,6 +29,7 @@ def prepare_environment():
     print(f"Python {sys.version}")
     print(f"Fooocus version: {fooocus_version.version}")
 
+    # Grab ComfyUI repo from github:
     comfyui_name = 'ComfyUI-from-StabilityAI-Official'
     git_clone(comfy_repo, repo_dir(comfyui_name), "Inference Engine", comfy_commit_hash)
     sys.path.append(os.path.join(script_path, dir_repos, comfyui_name))

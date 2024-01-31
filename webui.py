@@ -40,6 +40,7 @@ def generate_clicked(*args):
         gr.update(value=None), \
         gr.update()
 
+    # Toss all the information needed to generate an image into the worker thread's buffer:
     worker.buffer.append(list(args))
     finished = False
 
