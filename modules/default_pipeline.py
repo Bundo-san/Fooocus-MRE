@@ -385,42 +385,20 @@ def process_diffusion(positive_cond, negative_cond, steps, switch, width, height
         positive_conditions, negative_conditions = core.apply_controlnet(positive_conditions, 
             negative_conditions, controlnet_depth, input_image, depth_strength, depth_start, depth_stop)
 
-    # Set prompts for the refiner as needed:
-    if xl_refiner is not None and is_base_sdxl():
-        positive_conditions_refiner = positive_cond[1]
-        negative_conditions_refiner = negative_cond[1]
-
-        sampled_latent = core.ksampler_with_refiner(
-            model=xl_base_patched.unet,
-            positive=positive_conditions,
-            negative=negative_conditions,
-            refiner=xl_refiner.unet,
-            refiner_positive=positive_conditions_refiner,
-            refiner_negative=negative_conditions_refiner,
-            refiner_switch_step=switch,
-            latent=initial_latent,
-            steps=steps, start_step=start_step, last_step=steps,
-            disable_noise=False, force_full_denoise=force_full_denoise, denoise=denoise,
-            seed=image_seed,
-            sampler_name=sampler_name,
-            scheduler=scheduler,
-            cfg=cfg,
-            callback_function=callback
-        )
-    else:
-        sampled_latent = core.ksampler(
-            model=xl_base_patched.unet,
-            positive=positive_conditions,
-            negative=negative_conditions,
-            latent=initial_latent,
-            steps=steps, start_step=start_step, last_step=steps,
-            disable_noise=False, force_full_denoise=force_full_denoise, denoise=denoise,
-            seed=image_seed,
-            sampler_name=sampler_name,
-            scheduler=scheduler,
-            cfg=cfg,
-            callback_function=callback
-        )
+    # Feed all the info into the ksampler to generate latent image:
+    sampled_latent = core.ksampler(
+        model=xl_base_patched.unet,
+        positive=positive_conditions,
+        negative=negative_conditions,
+        latent=initial_latent,
+        steps=steps, start_step=start_step, last_step=steps,
+        disable_noise=False, force_full_denoise=force_full_denoise, denoise=denoise,
+        seed=image_seed,
+        sampler_name=sampler_name,
+        scheduler=scheduler,
+        cfg=cfg,
+        callback_function=callback
+    )
 
     decoded_latent = core.decode_vae(vae=xl_base_patched.vae, latent_image=sampled_latent, tiled=tiled)
     images = core.pytorch_to_numpy(decoded_latent)

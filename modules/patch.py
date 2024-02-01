@@ -3,7 +3,6 @@ import contextlib
 import comfy.model_base
 import comfy.ldm.modules.diffusionmodules.openaimodel
 import comfy.samplers
-import comfy.k_diffusion.external
 import comfy.model_management
 import modules.anisotropic as anisotropic
 import comfy.ldm.modules.attention
@@ -35,18 +34,30 @@ def calculate_weight_patched(self, patches, weight, key):
         alpha = p[0]
         v = p[1]
         strength_model = p[2]
+
         if strength_model != 1.0:
             weight *= strength_model
+
         if isinstance(v, list):
             v = (self.calculate_weight(v[1:], v[0].clone(), key), )
-        if len(v) == 1:
+
+        if len(v) == 1:                                                                                                                                                                                          
+            patch_type = "diff"                                                           
+        elif len(v) == 2:                                                                 
+            patch_type = v[0]                                                             
+            v = v[1]
+        elif len(v) == 3:
+            patch_type = "fooocus"
+                                                                                              
+        if patch_type == "diff":
+            # Code from ComfyUI
             w1 = v[0]
             if alpha != 0.0:
                 if w1.shape != weight.shape:
                     print("WARNING SHAPE MISMATCH {} WEIGHT NOT MERGED {} != {}".format(key, w1.shape, weight.shape))
                 else:
                     weight += alpha * comfy.model_management.cast_to_device(w1, weight.device, weight.dtype)
-        elif len(v) == 3:
+        elif patch_type == "fooocus":
             # fooocus
             w1 = comfy.model_management.cast_to_device(v[0], weight.device, torch.float32)
             w_min = comfy.model_management.cast_to_device(v[1], weight.device, torch.float32)
@@ -57,7 +68,8 @@ def calculate_weight_patched(self, patches, weight, key):
                     print("WARNING SHAPE MISMATCH {} FOOOCUS WEIGHT NOT MERGED {} != {}".format(key, w1.shape, weight.shape))
                 else:
                     weight += alpha * comfy.model_management.cast_to_device(w1, weight.device, weight.dtype)
-        elif len(v) == 4: #lora/locon
+        elif patch_type == "lora": #lora/locon
+            # Code from ComfyUI
             mat1 = comfy.model_management.cast_to_device(v[0], weight.device, torch.float32)
             mat2 = comfy.model_management.cast_to_device(v[1], weight.device, torch.float32)
             if v[2] is not None:
@@ -71,7 +83,7 @@ def calculate_weight_patched(self, patches, weight, key):
                 weight += (alpha * torch.mm(mat1.flatten(start_dim=1), mat2.flatten(start_dim=1))).reshape(weight.shape).type(weight.dtype)
             except Exception as e:
                 print("ERROR", key, e)
-        elif len(v) == 8: #lokr
+        elif patch_type == "lokr": #lokr
             w1 = v[0]
             w2 = v[1]
             w1_a = v[3]
@@ -80,12 +92,14 @@ def calculate_weight_patched(self, patches, weight, key):
             w2_b = v[6]
             t2 = v[7]
             dim = None
+
             if w1 is None:
                 dim = w1_b.shape[0]
                 w1 = torch.mm(comfy.model_management.cast_to_device(w1_a, weight.device, torch.float32),
                               comfy.model_management.cast_to_device(w1_b, weight.device, torch.float32))
             else:
                 w1 = comfy.model_management.cast_to_device(w1, weight.device, torch.float32)
+
             if w2 is None:
                 dim = w2_b.shape[0]
                 if t2 is None:
@@ -98,15 +112,17 @@ def calculate_weight_patched(self, patches, weight, key):
                                       comfy.model_management.cast_to_device(w2_a, weight.device, torch.float32))
             else:
                 w2 = comfy.model_management.cast_to_device(w2, weight.device, torch.float32)
+
             if len(w2.shape) == 4:
                 w1 = w1.unsqueeze(2).unsqueeze(2)
             if v[2] is not None and dim is not None:
                 alpha *= v[2] / dim
+
             try:
                 weight += alpha * torch.kron(w1, w2).reshape(weight.shape).type(weight.dtype)
             except Exception as e:
                 print("ERROR", key, e)
-        else: #loha
+        elif patch_type == "loha":
             w1a = v[0]
             w1b = v[1]
             if v[2] is not None:
@@ -120,6 +136,7 @@ def calculate_weight_patched(self, patches, weight, key):
                                   comfy.model_management.cast_to_device(t1, weight.device, torch.float32),
                                   comfy.model_management.cast_to_device(w1b, weight.device, torch.float32),
                                   comfy.model_management.cast_to_device(w1a, weight.device, torch.float32))
+
                 m2 = torch.einsum('i j k l, j r, i p -> p r k l',
                                   comfy.model_management.cast_to_device(t2, weight.device, torch.float32),
                                   comfy.model_management.cast_to_device(w2b, weight.device, torch.float32),
@@ -129,10 +146,24 @@ def calculate_weight_patched(self, patches, weight, key):
                               comfy.model_management.cast_to_device(w1b, weight.device, torch.float32))
                 m2 = torch.mm(comfy.model_management.cast_to_device(w2a, weight.device, torch.float32),
                               comfy.model_management.cast_to_device(w2b, weight.device, torch.float32))
+
             try:
                 weight += (alpha * m1 * m2).reshape(weight.shape).type(weight.dtype)
             except Exception as e:
                 print("ERROR", key, e)
+        elif patch_type == "glora":
+            if v[4] is not None:
+                alpha *= v[4] / v[0].shape[0]
+
+            a1 = comfy.model_management.cast_to_device(v[0].flatten(start_dim=1), weight.device, torch.float32)                                                                                                  
+            a2 = comfy.model_management.cast_to_device(v[1].flatten(start_dim=1), weight.device, torch.float32)
+            b1 = comfy.model_management.cast_to_device(v[2].flatten(start_dim=1), weight.device, torch.float32)
+            b2 = comfy.model_management.cast_to_device(v[3].flatten(start_dim=1), weight.device, torch.float32)
+                                                                                              
+            weight += ((torch.mm(b2, b1) + torch.mm(torch.mm(weight.flatten(start_dim=1), a2), a1)) * alpha).reshape(weight.shape).type(weight.dtype)
+        else:                                                                             
+            print("patch type not recognized", patch_type, key)
+
     return weight
 
 
@@ -153,16 +184,6 @@ def cfg_patched(args):
     cond = eps_degraded_weighted * cfg_s + cfg_x0
 
     return uncond + (cond - uncond) * cond_scale
-
-
-def patched_discrete_eps_ddpm_denoiser_forward(self, input, sigma, **kwargs):
-    global cfg_x0, cfg_s, cfg_cin
-    c_out, c_in = [utils.append_dims(x, input.ndim) for x in self.get_scalings(sigma)]
-    cfg_x0 = input
-    cfg_s = c_out
-    cfg_cin = c_in
-    return self.get_eps(input * c_in, self.sigma_to_t(sigma), **kwargs)
-
 
 def patched_model_function(func, args):
     global cfg_cin
@@ -209,7 +230,7 @@ def text_encoder_device_patched():
 
 
 def encode_token_weights_patched_with_a1111_method(self, token_weight_pairs):
-    to_encode = list(self.empty_tokens)
+    to_encode = list()
     for x in token_weight_pairs:
         tokens = list(map(lambda a: a[0], x))
         to_encode.append(tokens)
@@ -447,11 +468,6 @@ def vae_bf16_upsample_forward(self, x):
 
 
 def patch_all():
-#    comfy.model_management.vae_dtype = vae_dtype_patched
-#    comfy.ldm.modules.diffusionmodules.model.Upsample.forward = vae_bf16_upsample_forward
-
-#    comfy.sd1_clip.SD1ClipModel.forward = patched_SD1ClipModel_forward
-
     comfy.model_patcher.ModelPatcher.calculate_weight = calculate_weight_patched
     comfy.ldm.modules.diffusionmodules.openaimodel.UNetModel.forward = patched_unet_forward
 
@@ -460,7 +476,6 @@ def patch_all():
     comfy.model_management.text_encoder_device = text_encoder_device_patched
     print(f'Fooocus Text Processing Pipelines are retargeted to {str(comfy.model_management.text_encoder_device())}')
 
-    comfy.k_diffusion.external.DiscreteEpsDDPMDenoiser.forward = patched_discrete_eps_ddpm_denoiser_forward
     comfy.model_base.SDXL.encode_adm = sdxl_encode_adm_patched
 
     comfy.sd1_clip.ClipTokenWeightEncoder.encode_token_weights = encode_token_weights_patched_with_a1111_method
