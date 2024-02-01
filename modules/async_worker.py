@@ -437,11 +437,6 @@ def worker():
             t['c'][0], t['c'][1] = pipeline.apply_prompt_strength(t['c'][0], t['c'][1], positive_prompt_strength)
             t['uc'][0], t['uc'][1] = pipeline.apply_prompt_strength(t['uc'][0], t['uc'][1], negative_prompt_strength)
 
-        for i, t in enumerate(tasks):
-            progressbar(13, f'Applying Revision #{i + 1} ...')
-            t['c'][0] = pipeline.apply_revision(t['c'][0], revision_mode, revision_strengths, clip_vision_outputs)
-
-
         pipeline.clear_all_caches()  # save memory
 
         results = []

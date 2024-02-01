@@ -297,10 +297,6 @@ def ksampler(model, positive, negative, latent, seed=None, steps=30, cfg=7.0, sa
     Generates and returns a sampled latent image.
     Called in default_pipeline.py by process_diffusion().
     """
-    # SCHEDULERS = ["normal", "karras", "exponential", "sgm_uniform", "simple", "ddim_uniform"]
-    # SAMPLERS = ["euler", "euler_ancestral", "heun", "dpm_2", "dpm_2_ancestral",
-    #             "lms", "dpm_fast", "dpm_adaptive", "dpmpp_2s_ancestral", "dpmpp_sde", "dpmpp_sde_gpu",
-    #             "dpmpp_2m", "dpmpp_2m_sde", "dpmpp_2m_sde_gpu", "dpmpp_3m_sde", "dpmpp_3m_sde_gpu", "ddpm", "ddim", "uni_pc", "uni_pc_bh2"]
 
     device = comfy.model_management.get_torch_device() # Load appropriate CUDA/XPU backends
     sigmas = None
@@ -352,8 +348,8 @@ def ksampler(model, positive, negative, latent, seed=None, steps=30, cfg=7.0, sa
 
     samples = sampler.sample(noise, positive_copy, negative_copy, cfg=cfg, latent_image=latent_image,
                              start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise,
-                             denoise_mask=noise_mask, sigmas=sigmas, callback=callback, disable_pbar=disable_pbar,
-                             seed=seed)
+                             denoise_mask=noise_mask, sigmas=sigmas, callback=callback, 
+                             disable_pbar=disable_pbar, seed=seed)
 
     samples = samples.cpu()
 

@@ -9,7 +9,7 @@ import comfy.model_management
 
 from comfy.model_base import BaseModel, SDXL, SDXLRefiner
 from modules.settings import default_settings
-from modules.patch import set_comfy_adm_encoding, set_fooocus_adm_encoding, cfg_patched, patched_model_function
+from modules.patch import cfg_patched, patched_model_function
 from modules.expansion import FooocusExpansion
 
 
@@ -215,19 +215,6 @@ def apply_prompt_strength(base_cond, refiner_cond, prompt_strength=1.0):
     else:
         refiner_cond = None
     return base_cond, refiner_cond
-
-
-@torch.no_grad()
-@torch.inference_mode()
-def apply_revision(base_cond, revision=False, revision_strengths=[], clip_vision_outputs=[]):
-    if revision:
-        set_comfy_adm_encoding()
-        for i in range(len(clip_vision_outputs)):
-            if revision_strengths[i % 4] != 0:
-                base_cond = core.apply_adm(base_cond, clip_vision_outputs[i % 4], revision_strengths[i % 4], 0)
-    else:
-        set_fooocus_adm_encoding()
-    return base_cond
 
 
 @torch.no_grad()

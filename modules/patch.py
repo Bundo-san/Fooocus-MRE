@@ -194,36 +194,6 @@ def patched_model_function(func, args):
     return func(x, t, **c)
 
 
-def sdxl_encode_adm_patched(self, **kwargs):
-    global negative_adm
-
-    clip_pooled = sdxl_pooled(kwargs, self.noise_augmentor)
-    width = kwargs.get("width", 768)
-    height = kwargs.get("height", 768)
-    crop_w = kwargs.get("crop_w", 0)
-    crop_h = kwargs.get("crop_h", 0)
-    target_width = kwargs.get("target_width", width)
-    target_height = kwargs.get("target_height", height)
-
-    if negative_adm:
-        if kwargs.get("prompt_type", "") == "negative":
-            width *= 0.8
-            height *= 0.8
-        elif kwargs.get("prompt_type", "") == "positive":
-            width *= 1.5
-            height *= 1.5
-
-    out = []
-    out.append(self.embedder(torch.Tensor([height])))
-    out.append(self.embedder(torch.Tensor([width])))
-    out.append(self.embedder(torch.Tensor([crop_h])))
-    out.append(self.embedder(torch.Tensor([crop_w])))
-    out.append(self.embedder(torch.Tensor([target_height])))
-    out.append(self.embedder(torch.Tensor([target_width])))
-    flat = torch.flatten(torch.cat(out)).unsqueeze(dim=0).repeat(clip_pooled.shape[0], 1)
-    return torch.cat((clip_pooled.to(flat.device), flat), dim=1)
-
-
 def text_encoder_device_patched():
     # Fooocus's style system uses text encoder much more times than comfy so this makes things much faster.
     return comfy.model_management.get_torch_device()
@@ -476,17 +446,4 @@ def patch_all():
     comfy.model_management.text_encoder_device = text_encoder_device_patched
     print(f'Fooocus Text Processing Pipelines are retargeted to {str(comfy.model_management.text_encoder_device())}')
 
-    comfy.model_base.SDXL.encode_adm = sdxl_encode_adm_patched
-
-    comfy.sd1_clip.ClipTokenWeightEncoder.encode_token_weights = encode_token_weights_patched_with_a1111_method
-    return
-
-
-def set_comfy_adm_encoding():
-    comfy.model_base.SDXL.encode_adm = comfy_encode_adm
-    return
-
-
-def set_fooocus_adm_encoding():
-    comfy.model_base.SDXL.encode_adm = sdxl_encode_adm_patched
     return
