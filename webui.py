@@ -105,9 +105,9 @@ def metadata_to_ctrls(metadata, ctrls):
     if 'steps' in metadata:
         ctrls[10] = metadata['steps']
         if ctrls[10] == constants.STEPS_SPEED:
-            ctrls[3] = 'Speed'
+            ctrls[3] = 'Custom'
         elif ctrls[10] == constants.STEPS_QUALITY:
-            ctrls[3] = 'Quality'
+            ctrls[3] = 'Custom'
         else:
             ctrls[3] = 'Custom'
     if 'switch' in metadata:
@@ -273,8 +273,8 @@ def load_last_prompt_handler(*args):
     return ctrls
 
 
-def load_input_images_handler(files):
-    return list(map(lambda x: x.name, files)), gr.update(selected=GALLERY_ID_INPUT), gr.update(value=len(files))
+def load_input_images_handler(files, img2img_checkbox):
+    return list(map(lambda x: x.name, files)), gr.update(selected=GALLERY_ID_INPUT), gr.update(value=len(files)), gr.update(value=True)
 
 
 def load_revision_images_handler(files):
@@ -379,17 +379,12 @@ with shared.gradio_root:
             inpaint_tab.select(lambda: ['inpaint', default_image], outputs=[current_tab, inpaint_input_image], queue=False)
 
         with gr.Column(scale=1, visible=settings['advanced_mode']) as advanced_column:
-            with gr.Tab(label='Settings'):
-                performance = gr.Radio(label='Performance', choices=['Speed', 'Quality', 'Custom'], value=settings['performance'])
-                with gr.Row(visible=settings['performance'] == 'Custom') as custom_row:
-                    custom_steps = gr.Slider(label='Custom Steps', minimum=10, maximum=200, step=1, value=settings['custom_steps'])
-                    custom_switch = gr.Slider(label='Custom Switch', minimum=0.2, maximum=1.0, step=0.01, value=settings['custom_switch'])
+            with gr.Tab(label='Prompt'):
                 resolution = gr.Dropdown(label='Resolution (width × height)', choices=list(resolutions.keys()), value=settings['resolution'], allow_custom_value=True)
                 style_selections = gr.Dropdown(label='Image Style(s)', choices=style_keys, value=settings['styles'], multiselect=True, max_choices=8)
                 with gr.Row():
                     prompt_expansion = gr.Checkbox(label=fooocus_expansion, value=settings['prompt_expansion'])
-                    style_iterator = gr.Checkbox(label='Style Iterator', value=False)
-                image_number = gr.Slider(label='Image Number', minimum=1, maximum=256, step=1, value=settings['image_number'])
+                    style_iterator = gr.Checkbox(label='Style Iterator', value=False, visible=False)
                 negative_prompt = gr.Textbox(label='Negative Prompt', show_label=True, placeholder="What you don't want to see.", value=settings['negative_prompt'])
                 with gr.Row():
                    seed_random = gr.Checkbox(label='Random', value=settings['seed_random'])
@@ -426,14 +421,12 @@ with shared.gradio_root:
                 def performance_changed(value):
                     return gr.update(visible=value == 'Custom')
 
-                performance.change(fn=performance_changed, inputs=[performance], outputs=[custom_row])
-
-                def style_iterator_changed(_style_iterator, _style_selections):
-                    if _style_iterator:
-                        combinations_count = 1 + len(style_keys) - len(_style_selections) # original style selection + all remaining style combinations
-                        return gr.update(interactive=False, value=combinations_count)
-                    else:
-                        return gr.update(interactive=True, value=settings['image_number'])
+                #def style_iterator_changed(_style_iterator, _style_selections):
+                #    if _style_iterator:
+                #        combinations_count = 1 + len(style_keys) - len(_style_selections) # original style selection + all remaining style combinations
+                #        return gr.update(interactive=False, value=combinations_count)
+                #    else:
+                #        return gr.update(interactive=True, value=settings['image_number'])
 
                 def style_selections_changed(_style_iterator, _style_selections):
                     if _style_iterator:
@@ -442,8 +435,7 @@ with shared.gradio_root:
                     else:
                         return gr.update()
 
-                style_iterator.change(style_iterator_changed, inputs=[style_iterator, style_selections], outputs=[image_number])
-                style_selections.change(style_selections_changed, inputs=[style_iterator, style_selections], outputs=[image_number])
+                #style_iterator.change(style_iterator_changed, inputs=[style_iterator, style_selections], outputs=[image_number])
 
             with gr.Tab(label='Image-2-Image'):
                 revision_mode = gr.Checkbox(label='Revision (prompting with images)', value=settings['revision_mode'])
@@ -477,7 +469,7 @@ with shared.gradio_root:
                     output_to_input_button = gr.Button(label='Output to Input', value='Output to Input', elem_classes='type_small_row', min_width=0)
                     output_to_revision_button = gr.Button(label='Output to Revision', value='Output to Revision', elem_classes='type_small_row', min_width=0)
 
-                load_input_images_button.upload(fn=load_input_images_handler, inputs=[load_input_images_button], outputs=[input_gallery, gallery_tabs, image_number])
+                load_input_images_button.upload(fn=load_input_images_handler, inputs=[load_input_images_button, img2img_mode], outputs=[input_gallery, gallery_tabs, img2img_mode])
                 load_revision_images_button.upload(fn=load_revision_images_handler, inputs=[load_revision_images_button], outputs=[revision_mode, revision_gallery, gallery_tabs])
                 output_to_input_button.click(output_to_input_handler, inputs=output_gallery, outputs=[input_gallery, gallery_tabs])
                 output_to_revision_button.click(output_to_revision_handler, inputs=output_gallery, outputs=[revision_mode, revision_gallery, gallery_tabs])
@@ -552,11 +544,16 @@ with shared.gradio_root:
                 depth_ctrls = [control_lora_depth, depth_start, depth_stop, depth_strength, depth_model]
 
             with gr.Tab(label='Sampling'):
+                image_number = gr.Slider(label='Image Number', minimum=1, maximum=50, step=1, value=settings['image_number'])
+                performance = gr.Radio(label='Performance', choices=['Speed', 'Quality', 'Custom'], value=settings['performance'], visible=False)
+                with gr.Row(visible=settings['performance'] == 'Custom') as custom_row:
+                    custom_steps = gr.Slider(label='Custom Steps', minimum=10, maximum=200, step=1, value=settings['custom_steps'])
+                    custom_switch = gr.Slider(label='Custom Switch', minimum=0.2, maximum=1.0, step=0.01, value=settings['custom_switch'], visible=False)
                 cfg = gr.Slider(label='CFG', minimum=1.0, maximum=20.0, step=0.1, value=settings['cfg'])
                 base_clip_skip = gr.Slider(label='Base CLIP Skip', minimum=-10, maximum=-1, step=1, value=settings['base_clip_skip'])
                 refiner_clip_skip = gr.Slider(label='Refiner CLIP Skip', minimum=-10, maximum=-1, step=1, value=settings['refiner_clip_skip'])
-                sampler_name = gr.Dropdown(label='Sampler', choices=['dpmpp_2m_sde_gpu', 'dpmpp_2m_sde', 'dpmpp_3m_sde_gpu', 'dpmpp_3m_sde',
-                    'dpmpp_sde_gpu', 'dpmpp_sde', 'dpmpp_2m', 'dpmpp_2s_ancestral', 'euler', 'euler_ancestral', 'heun', 'dpm_2', 'dpm_2_ancestral', 'ddpm'], value=settings['sampler'])
+                sampler_name = gr.Dropdown(label='Sampler', choices=['dpmpp_3m_sde_gpu', 
+                    'dpmpp_3m_sde','dpmpp_2m', 'heun', 'ddpm', 'ddim', 'uni_pc', 'uni_pc_bh2'], value=settings['sampler'])
                 scheduler = gr.Dropdown(label='Scheduler', choices=['karras', 'exponential', 'sgm_uniform', 'simple', 'ddim_uniform'], value=settings['scheduler'])
                 sharpness = gr.Slider(label='Sampling Sharpness', minimum=0.0, maximum=30.0, step=0.01, value=settings['sharpness'])
 
@@ -586,6 +583,10 @@ with shared.gradio_root:
                 freeu_enabled.change(fn=freeu_changed, inputs=[freeu_enabled], outputs=[freeu_b1, freeu_b2, freeu_s1, freeu_s2])
 
                 freeu_ctrls = [freeu_enabled, freeu_b1, freeu_b2, freeu_s1, freeu_s2]
+
+                performance.change(fn=performance_changed, inputs=[performance], outputs=[custom_row])
+
+                style_selections.change(style_selections_changed, inputs=[style_iterator, style_selections], outputs=[image_number])
 
             with gr.Tab(label='Misc'):
                 output_format = gr.Radio(label='Output Format', choices=['png', 'jpg'], value=settings['output_format'])
