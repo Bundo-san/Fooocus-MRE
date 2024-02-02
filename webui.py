@@ -536,7 +536,7 @@ with shared.gradio_root:
                 with gr.Row():
                     model_refresh = gr.Button(label='Refresh', value='\U0001f504 Refresh All Files', variant='secondary', elem_classes='refresh_button')
 
-                canny_ctrls = [control_lora_canny, canny_start, canny_stop, canny_strength, canny_model]
+                canny_ctrls = [control_lora_canny, canny_start, canny_start, canny_start, canny_stop, canny_strength, canny_model]
                 depth_ctrls = [control_lora_depth, depth_start, depth_stop, depth_strength, depth_model]
 
             with gr.Tab(label='Sampling'):

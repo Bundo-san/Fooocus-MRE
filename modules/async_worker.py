@@ -81,7 +81,7 @@ def worker():
         img2img_mode, img2img_start_step, img2img_denoise, img2img_scale, \
         revision_mode, positive_prompt_strength, negative_prompt_strength, revision_strength_1, revision_strength_2, \
         revision_strength_3, revision_strength_4, same_seed_for_all, output_format, \
-        control_lora_canny, canny_start, canny_stop, canny_strength, canny_model, \
+        control_lora_canny, canny_edge_low, canny_edge_high, canny_start, canny_stop, canny_strength, canny_model, \
         control_lora_depth, depth_start, depth_stop, depth_strength, depth_model, use_expansion, \
         freeu, freeu_b1, freeu_b2, freeu_s1, freeu_s2, \
         input_image_checkbox, current_tab, \
