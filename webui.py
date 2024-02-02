@@ -280,13 +280,29 @@ def load_input_images_handler(files, img2img_checkbox):
 def load_revision_images_handler(files):
     return gr.update(value=True), list(map(lambda x: x.name, files[:4])), gr.update(selected=GALLERY_ID_REVISION)
 
-
+gallery_selected_index = -1
 def output_to_input_handler(gallery, img2img_checkbox):
+    """
+    Handles sending one, or all Output images into Input depend on if any image is selected.
+    """
+    global gallery_selected_index
+    
     if len(gallery) == 0:
         return [], gr.update()
+    elif gallery_selected_index != -1:
+        selected_index = int(gallery_selected_index)
+        gallery_selected_index = -1
+        return [gallery[selected_index]['name']], gr.update(selected=GALLERY_ID_INPUT), gr.update(value=True)
     else:
         return list(map(lambda x: x['name'], gallery)), gr.update(selected=GALLERY_ID_INPUT), gr.update(value=True)
 
+
+def on_gallery_select(evt: gr.SelectData):
+    global gallery_selected_index
+    """
+    We track the selected image to potentially send to input for revision or image-2-image.
+    """
+    gallery_selected_index = evt.index
 
 def output_to_revision_handler(gallery):
     if len(gallery) == 0:
@@ -314,6 +330,7 @@ with shared.gradio_root:
                         revision_gallery = gr.Gallery(label='Revision', show_label=False, object_fit='contain', height=720, visible=True)
                     with gr.Tab(label='Output', id=GALLERY_ID_OUTPUT):
                         output_gallery = gr.Gallery(label='Output', show_label=False, object_fit='contain', height=720, visible=True)
+                        output_gallery.select(on_gallery_select)
             with gr.Row(elem_classes='type_row'):
                 with gr.Column(scale=17):
                     prompt = gr.Textbox(show_label=False, placeholder='What do you want to see.', container=False, autofocus=True, elem_classes='type_row', lines=1024, value=settings['prompt'])
