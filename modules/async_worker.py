@@ -81,7 +81,7 @@ def worker():
         img2img_mode, img2img_start_step, img2img_denoise, img2img_scale, \
         revision_mode, positive_prompt_strength, negative_prompt_strength, revision_strength_1, revision_strength_2, \
         revision_strength_3, revision_strength_4, same_seed_for_all, output_format, \
-        control_lora_canny, canny_edge_low, canny_edge_high, canny_start, canny_stop, canny_strength, canny_model, \
+        control_lora_canny, canny_start, canny_stop, canny_strength, canny_model, \
         control_lora_depth, depth_start, depth_stop, depth_strength, depth_model, use_expansion, \
         freeu, freeu_b1, freeu_b2, freeu_s1, freeu_s2, \
         input_image_checkbox, current_tab, \
@@ -498,8 +498,6 @@ def worker():
                     input_image=input_image, #? -> latent
                     start_step=start_step,
                     control_lora_canny=control_lora_canny,
-                    canny_edge_low=canny_edge_low,
-                    canny_edge_high=canny_edge_high,
                     canny_start=canny_start,
                     canny_stop=canny_stop,
                     canny_strength=canny_strength,
@@ -549,7 +547,7 @@ def worker():
                     }
                 if control_lora_canny:
                     metadata |= {
-                        'canny_edge_low': canny_edge_low, 'canny_edge_high': canny_edge_high, 'canny_start': canny_start,
+                        'canny_start': canny_start,
                         'canny_stop': canny_stop, 'canny_strength': canny_strength, 'canny_model': canny_model, 'canny_input': input_image_filename
                     }
                 if control_lora_depth:
@@ -583,7 +581,7 @@ def worker():
                         ('Revision', (revision_mode, revision_strength_1, revision_strength_2, revision_strength_3,
                             revision_strength_4, revision_images_filenames) if revision_mode else (revision_mode)),
                         ('Prompt Strengths', (positive_prompt_strength, negative_prompt_strength)),
-                        ('Canny', (control_lora_canny, canny_edge_low, canny_edge_high, canny_start, canny_stop,
+                        ('Canny', (control_lora_canny, canny_start, canny_stop,
                             canny_strength, canny_model, input_image_filename) if control_lora_canny else (control_lora_canny)),
                         ('Depth', (control_lora_depth, depth_start, depth_stop, depth_strength, depth_model, input_image_filename) if control_lora_depth else (control_lora_depth))
                     ]

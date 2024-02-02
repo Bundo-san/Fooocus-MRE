@@ -175,15 +175,15 @@ def apply_adm(conditioning, clip_vision_output, strength, noise_augmentation):
 
 @torch.no_grad()
 @torch.inference_mode()
-def detect_edge(image, low_threshold, high_threshold):
-    return opCanny.execute(image=image, resolution=1024, coarse="enable")
+def detect_edge(image):
+    return opCanny.execute(image=image, resolution=1024, coarse="disable")
 
 @torch.no_grad()
 @torch.inference_mode()
 def detect_depth(image):
-    a =  ("FLOAT", {"default": np.pi * 2.0, "min": 0.0, "max": np.pi * 5.0, "step": 0.05}),                                                                                                                  
+    a =  ("FLOAT", {"default": np.pi * 2.0, "min": 0.0, "max": np.pi * 5.0, "step": 0.05}),
     bg_threshold = ("FLOAT", {"default": 0.1, "min": 0, "max": 1, "step": 0.05})
-    return opMidas.execute(image, a, bg_threshold, 512)
+    return opMidas.execute(image, a, bg_threshold, 1024)
 
 @torch.no_grad()
 @torch.inference_mode()

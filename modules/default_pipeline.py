@@ -331,7 +331,7 @@ def patch_all_models():
 @torch.no_grad()
 @torch.inference_mode()
 def process_diffusion(positive_cond, negative_cond, steps, switch, width, height, image_seed, sampler_name, scheduler, cfg, img2img, input_image, start_step,
-        control_lora_canny, canny_edge_low, canny_edge_high, canny_start, canny_stop, canny_strength,
+        control_lora_canny, canny_start, canny_stop, canny_strength,
         control_lora_depth, depth_start, depth_stop, depth_strength, callback, latent=None, denoise=1.0, tiled=False):
 
     patch_all_models()
@@ -356,7 +356,7 @@ def process_diffusion(positive_cond, negative_cond, steps, switch, width, height
 
     # Generate canny image to feed into canny ControlNet:
     if control_lora_canny and input_image != None:
-        edges_image = core.detect_edge(input_image, canny_edge_low, canny_edge_high)
+        edges_image = core.detect_edge(input_image)
         positive_conditions, negative_conditions = core.apply_controlnet(positive_conditions,
             negative_conditions, controlnet_canny, edges_image[0], canny_strength, canny_start, canny_stop)
 

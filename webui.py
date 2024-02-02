@@ -281,11 +281,11 @@ def load_revision_images_handler(files):
     return gr.update(value=True), list(map(lambda x: x.name, files[:4])), gr.update(selected=GALLERY_ID_REVISION)
 
 
-def output_to_input_handler(gallery):
+def output_to_input_handler(gallery, img2img_checkbox):
     if len(gallery) == 0:
         return [], gr.update()
     else:
-        return list(map(lambda x: x['name'], gallery)), gr.update(selected=GALLERY_ID_INPUT)
+        return list(map(lambda x: x['name'], gallery)), gr.update(selected=GALLERY_ID_INPUT), gr.update(value=True)
 
 
 def output_to_revision_handler(gallery):
@@ -471,7 +471,7 @@ with shared.gradio_root:
 
                 load_input_images_button.upload(fn=load_input_images_handler, inputs=[load_input_images_button, img2img_mode], outputs=[input_gallery, gallery_tabs, img2img_mode])
                 load_revision_images_button.upload(fn=load_revision_images_handler, inputs=[load_revision_images_button], outputs=[revision_mode, revision_gallery, gallery_tabs])
-                output_to_input_button.click(output_to_input_handler, inputs=output_gallery, outputs=[input_gallery, gallery_tabs])
+                output_to_input_button.click(output_to_input_handler, inputs=[output_gallery, img2img_mode], outputs=[input_gallery, gallery_tabs, img2img_mode])
                 output_to_revision_button.click(output_to_revision_handler, inputs=output_gallery, outputs=[revision_mode, revision_gallery, gallery_tabs])
 
                 img2img_ctrls = [img2img_mode, img2img_start_step, img2img_denoise, img2img_scale, revision_mode, positive_prompt_strength, negative_prompt_strength,
@@ -493,10 +493,6 @@ with shared.gradio_root:
 
             with gr.Tab(label='CN'):
                 control_lora_canny = gr.Checkbox(label='Control-LoRA: Canny', value=settings['control_lora_canny'])
-                canny_edge_low = gr.Slider(label='Edge Detection Low', minimum=0.0, maximum=1.0, step=0.01,
-                    value=settings['canny_edge_low'], visible=settings['control_lora_canny'])
-                canny_edge_high = gr.Slider(label='Edge Detection High', minimum=0.0, maximum=1.0, step=0.01,
-                    value=settings['canny_edge_high'], visible=settings['control_lora_canny'])
                 canny_start = gr.Slider(label='Canny Start', minimum=0.0, maximum=1.0, step=0.01,
                     value=settings['canny_start'], visible=settings['control_lora_canny'])
                 canny_stop = gr.Slider(label='Canny Stop', minimum=0.0, maximum=1.0, step=0.01,
@@ -508,7 +504,7 @@ with shared.gradio_root:
                     return gr.update(visible=value == True), gr.update(visible=value == True), gr.update(visible=value == True), \
                         gr.update(visible=value == True), gr.update(visible=value == True)
 
-                control_lora_canny.change(fn=canny_changed, inputs=[control_lora_canny], outputs=[canny_edge_low, canny_edge_high, canny_start, canny_stop, canny_strength])
+                control_lora_canny.change(fn=canny_changed, inputs=[control_lora_canny], outputs=[canny_start, canny_stop, canny_strength])
 
                 control_lora_depth = gr.Checkbox(label='Control-LoRA: Depth', value=settings['control_lora_depth'])
                 depth_start = gr.Slider(label='Depth Start', minimum=0.0, maximum=1.0, step=0.01,
@@ -540,7 +536,7 @@ with shared.gradio_root:
                 with gr.Row():
                     model_refresh = gr.Button(label='Refresh', value='\U0001f504 Refresh All Files', variant='secondary', elem_classes='refresh_button')
 
-                canny_ctrls = [control_lora_canny, canny_edge_low, canny_edge_high, canny_start, canny_stop, canny_strength, canny_model]
+                canny_ctrls = [control_lora_canny, canny_start, canny_stop, canny_strength, canny_model]
                 depth_ctrls = [control_lora_depth, depth_start, depth_stop, depth_strength, depth_model]
 
             with gr.Tab(label='Sampling'):
