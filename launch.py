@@ -24,7 +24,6 @@ def prepare_environment():
     xformers_package = os.environ.get('XFORMERS_PACKAGE', 'xformers==0.0.21')
 
     comfy_repo = os.environ.get('COMFY_REPO', "https://github.com/comfyanonymous/ComfyUI")
-    #comfy_commit_hash = os.environ.get('COMFY_COMMIT_HASH', "2381d36e6db8e8150e42ff2ede628db5b00ae26f")
     comfy_commit_hash = os.environ.get('COMFY_COMMIT_HASH', "c5a369a33ddb622827552716d9b0119035a2e666")
 
     print(f"Python {sys.version}")
@@ -34,6 +33,12 @@ def prepare_environment():
     comfyui_name = 'ComfyUI-from-StabilityAI-Official'
     git_clone(comfy_repo, repo_dir(comfyui_name), "Inference Engine", comfy_commit_hash)
     sys.path.append(os.path.join(script_path, dir_repos, comfyui_name))
+
+    # Grab ComfyUI ControlNet Auxiliary Preprocessors:
+    comfyui_cn_name = 'comfyui_controlnet_aux'
+    git_clone("https://github.com/Fannovel16/comfyui_controlnet_aux", repo_dir(comfyui_cn_name),
+              "ControlNet Preprocessors", "9489e421e666b8727603930521f663729dbeac2c")
+    sys.path.append(os.path.join(script_path, dir_repos, comfyui_cn_name))
 
     if REINSTALL_ALL or not is_installed("torch") or not is_installed("torchvision"):
         run(f'"{python}" -m {torch_command}', "Installing torch and torchvision", "Couldn't install torch", live=True)

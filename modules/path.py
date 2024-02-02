@@ -149,8 +149,8 @@ def update_all_model_names():
     global model_filenames, lora_filenames, canny_filenames, depth_filenames
     model_filenames = get_model_filenames(modelfile_path)
     lora_filenames = get_model_filenames(lorafile_path)
-    canny_filenames = get_model_filenames(controlnet_path, 'control-lora-canny')
-    depth_filenames = get_model_filenames(controlnet_path, 'control-lora-depth')
+    canny_filenames = get_model_filenames(controlnet_path, 'canny')
+    depth_filenames = get_model_filenames(controlnet_path, 'depth')
     return
 
 

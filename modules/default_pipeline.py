@@ -281,10 +281,6 @@ def clear_all_caches():
 @torch.no_grad()
 @torch.inference_mode()
 def refresh_everything(refiner_model_name, base_model_name, loras, freeu, b1, b2, s1, s2):
-    refresh_refiner_model(refiner_model_name)
-    if xl_refiner is not None:
-        virtual_memory.try_move_to_virtual_memory(xl_refiner.unet.model)
-        virtual_memory.try_move_to_virtual_memory(xl_refiner.clip.cond_stage_model)
 
     refresh_base_model(base_model_name)
     virtual_memory.load_from_virtual_memory(xl_base.unet.model)
@@ -340,9 +336,6 @@ def process_diffusion(positive_cond, negative_cond, steps, switch, width, height
 
     patch_all_models()
 
-    # If refiner selected, then move it into SWAP memory temporarily:
-    if xl_refiner is not None:
-        virtual_memory.try_move_to_virtual_memory(xl_refiner.unet.model)
     virtual_memory.load_from_virtual_memory(xl_base.unet.model)
 
     # If img2img input provided, encode the jpg/png into latent space. Otherwise, use randomly
@@ -365,12 +358,13 @@ def process_diffusion(positive_cond, negative_cond, steps, switch, width, height
     if control_lora_canny and input_image != None:
         edges_image = core.detect_edge(input_image, canny_edge_low, canny_edge_high)
         positive_conditions, negative_conditions = core.apply_controlnet(positive_conditions,
-            negative_conditions, controlnet_canny, edges_image, canny_strength, canny_start, canny_stop)
+            negative_conditions, controlnet_canny, edges_image[0], canny_strength, canny_start, canny_stop)
 
     # Feed image into depth ControlNet:
     if control_lora_depth and input_image != None:
+        depth_map = core.detect_depth(input_image)
         positive_conditions, negative_conditions = core.apply_controlnet(positive_conditions, 
-            negative_conditions, controlnet_depth, input_image, depth_strength, depth_start, depth_stop)
+            negative_conditions, controlnet_depth, depth_map[0], depth_strength, depth_start, depth_stop)
 
     # Feed all the info into the ksampler to generate latent image:
     sampled_latent = core.ksampler(

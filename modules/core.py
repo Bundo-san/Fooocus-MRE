@@ -23,7 +23,8 @@ from comfy.model_base import SDXL, SDXLRefiner
 from comfy.lora import model_lora_keys_unet, model_lora_keys_clip, load_lora
 from modules.samplers_advanced import KSamplerBasic
 from modules.path import embeddings_path
-
+from repositories.comfyui_controlnet_aux.node_wrappers.midas import MIDAS_Depth_Map_Preprocessor
+from repositories.comfyui_controlnet_aux.node_wrappers.lineart import LineArt_Preprocessor
 
 opEmptyLatentImage = EmptyLatentImage()
 opVAEDecode = VAEDecode()
@@ -36,7 +37,8 @@ opConditioningZeroOut = ConditioningZeroOut()
 opConditioningAverage = ConditioningAverage()
 opCLIPVisionEncode = CLIPVisionEncode()
 opUnCLIPConditioning = unCLIPConditioning()
-opCanny = Canny()
+opCanny = LineArt_Preprocessor()
+opMidas = MIDAS_Depth_Map_Preprocessor()
 opFreeU = FreeU()
 opControlNetApplyAdvanced = ControlNetApplyAdvanced()
 
@@ -174,8 +176,14 @@ def apply_adm(conditioning, clip_vision_output, strength, noise_augmentation):
 @torch.no_grad()
 @torch.inference_mode()
 def detect_edge(image, low_threshold, high_threshold):
-    return opCanny.detect_edge(image=image, low_threshold=low_threshold, high_threshold=high_threshold)[0]
+    return opCanny.execute(image=image, resolution=1024, coarse="enable")
 
+@torch.no_grad()
+@torch.inference_mode()
+def detect_depth(image):
+    a =  ("FLOAT", {"default": np.pi * 2.0, "min": 0.0, "max": np.pi * 5.0, "step": 0.05}),                                                                                                                  
+    bg_threshold = ("FLOAT", {"default": 0.1, "min": 0, "max": 1, "step": 0.05})
+    return opMidas.execute(image, a, bg_threshold, 512)
 
 @torch.no_grad()
 @torch.inference_mode()

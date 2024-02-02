@@ -429,9 +429,6 @@ def worker():
                 t['uc'][1] = pipeline.clip_encode(sd=pipeline.xl_refiner, texts=t['negative'],
                                                   pool_top_k=t['negative_top_k'])
 
-            virtual_memory.try_move_to_virtual_memory(pipeline.xl_refiner.clip.cond_stage_model)
-
-
         for i, t in enumerate(tasks):
             progressbar(13, f'Applying prompt strengths #{i + 1} ...')
             t['c'][0], t['c'][1] = pipeline.apply_prompt_strength(t['c'][0], t['c'][1], positive_prompt_strength)
