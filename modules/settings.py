@@ -7,8 +7,8 @@ from os.path import exists
 
 def load_settings():
     settings = {}
-    settings['advanced_mode'] = False
-    settings['image_number'] = 2
+    settings['advanced_mode'] = True
+    settings['image_number'] = 1
     settings['save_metadata_json'] = False
     settings['save_metadata_image'] = False
     settings['output_format'] = 'png'
@@ -19,7 +19,7 @@ def load_settings():
     settings['prompt_expansion'] = True
     settings['prompt'] = ''
     settings['negative_prompt'] = ''
-    settings['performance'] = 'Speed'
+    settings['performance'] = 'Custom'
     settings['custom_steps'] = 24
     settings['custom_switch'] = 0.75
     settings['img2img_mode'] = False
@@ -47,12 +47,12 @@ def load_settings():
     settings['revision_strength_3'] = 1.0
     settings['revision_strength_4'] = 1.0
     settings['resolution'] = get_resolution_string(1152, 896)
-    settings['sampler'] = 'dpmpp_2m_sde_gpu'
-    settings['scheduler'] = 'karras'
+    settings['sampler'] = 'dpmpp_3m_sde_gpu'
+    settings['scheduler'] = 'exponential'
     settings['cfg'] = 7.0
     settings['base_clip_skip'] = -2
     settings['refiner_clip_skip'] = -2
-    settings['sharpness'] = 2.0
+    settings['sharpness'] = 0
     settings['base_model'] = modules.path.default_base_model_name
     settings['refiner_model'] = modules.path.default_refiner_model_name
     settings['lora_1_model'] = modules.path.default_lora_name
@@ -65,11 +65,11 @@ def load_settings():
     settings['lora_4_weight'] = modules.path.default_lora_weight
     settings['lora_5_model'] = 'None'
     settings['lora_5_weight'] = modules.path.default_lora_weight
-    settings['freeu'] = False
-    settings['freeu_b1'] = 1.01
-    settings['freeu_b2'] = 1.02
-    settings['freeu_s1'] = 0.99
-    settings['freeu_s2'] = 0.95
+    settings['freeu'] = True
+    settings['freeu_b1'] = 1.16
+    settings['freeu_b2'] = 1.13
+    settings['freeu_s1'] = 0.85
+    settings['freeu_s2'] = 0.66
 
     if exists('settings.json'):
         with open('settings.json') as settings_file:
