@@ -9,7 +9,8 @@ KSAMPLER_NAMES = ["euler", "euler_ancestral", "heun", "heunpp2","dpm_2", "dpm_2_
                   "dpmpp_3m_sde_gpu", "ddpm", "lcm"]
 
 SCHEDULER_NAMES = ["normal", "karras", "exponential", "sgm_uniform", "simple", "ddim_uniform"]
-SAMPLER_NAMES = KSAMPLER_NAMES + ["ddim", "uni_pc", "uni_pc_bh2"]                             
+SAMPLER_NAMES = KSAMPLER_NAMES + ["ddim", "uni_pc", "uni_pc_bh2", 
+                                  "dpmpp_fooocus_2m_sde_inpaint_seamless"]
                                                                                               
 class KSamplerBasic:
     """

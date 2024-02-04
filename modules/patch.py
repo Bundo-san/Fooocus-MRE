@@ -216,12 +216,20 @@ def text_encoder_device_patched():
 
 @torch.no_grad()
 def sample_dpmpp_fooocus_2m_sde_inpaint_seamless(model, x, sigmas, extra_args=None, callback=None, disable=None, eta=1., s_noise=1., noise_sampler=None, **kwargs):
+    seed = extra_args.get("seed", None)
     sigma_min, sigma_max = sigmas[sigmas > 0].min(), sigmas.max()
     noise_sampler = BrownianTreeNoiseSampler(x, sigma_min, sigma_max, seed=extra_args.get("seed", None), cpu=False) if noise_sampler is None else noise_sampler
-
-    seed = extra_args.get("seed", None)
+    extra_args = {} if extra_args is None else extra_args
+    s_in = x.new_ones([x.shape[0]])
     assert isinstance(seed, int)
+    old_denoised = None
+    h_last = None
+    h = None
 
+    #========================================================================================
+    # Fooocus-Exclusive Code Starts Here:
+    #========================================================================================
+    # Generate different seed with CPU:
     energy_generator = torch.Generator(device='cpu')
     energy_generator.manual_seed(seed + 1)  # avoid bad results by using different seeds.
 
@@ -230,12 +238,9 @@ def sample_dpmpp_fooocus_2m_sde_inpaint_seamless(model, x, sigmas, extra_args=No
 
     sigma_min, sigma_max = sigmas[sigmas > 0].min(), sigmas.max()
     noise_sampler = BrownianTreeNoiseSampler(x, sigma_min, sigma_max, seed=seed, cpu=True) if noise_sampler is None else noise_sampler
-    extra_args = {} if extra_args is None else extra_args
-    s_in = x.new_ones([x.shape[0]])
 
-    old_denoised, h_last, h = None, None, None
-
-    latent_processor = model.inner_model.inner_model.inner_model.process_latent_in
+    # Note: model.inner_model is CFGNoisePredictor object.
+    latent_processor = model.inner_model.inner_model.process_latent_in
     inpaint_latent = None
     inpaint_mask = None
 
@@ -245,6 +250,9 @@ def sample_dpmpp_fooocus_2m_sde_inpaint_seamless(model, x, sigmas, extra_args=No
 
     def blend_latent(a, b, w):
         return a * w + b * (1 - w)
+    #========================================================================================
+    # Fooocus-Exclusive Code Ends
+    #========================================================================================
 
     for i in trange(len(sigmas) - 1, disable=disable):
         if inpaint_latent is None:
@@ -424,9 +432,8 @@ def patch_all():
     comfy.model_patcher.ModelPatcher.calculate_weight = calculate_weight_patched
     comfy.ldm.modules.diffusionmodules.openaimodel.UNetModel.forward = patched_unet_forward
 
-    # Add ability to inpaint:
-    comfy.k_diffusion.sampling.sample_dpmpp_fooocus_2m_sde_inpaint_seamless 
-                                = sample_dpmpp_fooocus_2m_sde_inpaint_seamless
+    # Add custom sampler to handle inpainting:
+    comfy.k_diffusion.sampling.sample_dpmpp_fooocus_2m_sde_inpaint_seamless = sample_dpmpp_fooocus_2m_sde_inpaint_seamless
 
     comfy.model_management.text_encoder_device = text_encoder_device_patched
     print(f'Fooocus Text Processing Pipelines are retargeted to {str(comfy.model_management.text_encoder_device())}')
