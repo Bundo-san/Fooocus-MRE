@@ -569,7 +569,7 @@ with shared.gradio_root:
                 sampler_name = gr.Dropdown(label='Sampler', choices=['dpmpp_3m_sde_gpu', 
                     'dpmpp_3m_sde','dpmpp_2m', 'heun', 'ddpm', 'ddim', 'uni_pc', 'uni_pc_bh2'], value=settings['sampler'])
                 scheduler = gr.Dropdown(label='Scheduler', choices=['karras', 'exponential', 'sgm_uniform', 'simple', 'ddim_uniform'], value=settings['scheduler'])
-                sharpness = gr.Slider(label='Sampling Sharpness', minimum=0.0, maximum=30.0, step=0.01, value=settings['sharpness'])
+                sharpness = gr.Slider(label='Sampling Sharpness', minimum=0.0, maximum=5.0, step=0.01, value=settings['sharpness'])
 
                 freeu_enabled = gr.Checkbox(label='FreeU', value=settings['freeu'])
                 freeu_b1 = gr.Slider(label='Backbone Scaling Factor 1', minimum=0, maximum=2, step=0.01,

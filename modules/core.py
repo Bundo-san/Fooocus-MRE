@@ -44,7 +44,7 @@ opControlNetApplyAdvanced = ControlNetApplyAdvanced()
 
 
 class StableDiffusionModel:
-    # Populated with all model info, and is called by load_model(), load_sd_lora() and freeu():
+    # Class contains all model info, and is called by load_model(), load_sd_lora() and freeu():
     def __init__(self, unet, vae, clip, clip_vision, model_filename=None):
         if isinstance(model_filename, str):
             is_refiner = isinstance(unet.model, SDXLRefiner)
