@@ -9,7 +9,7 @@ import comfy.model_management
 
 from comfy.model_base import BaseModel, SDXL, SDXLRefiner
 from modules.settings import default_settings
-from modules.patch import cfg_patched, patched_model_function
+from modules.patch import cfg_patched
 from modules.expansion import FooocusExpansion
 
 
@@ -314,16 +314,12 @@ def patch_all_models():
     assert xl_base is not None
     assert xl_base_patched is not None
 
+    # Modify CFG values based on user's sharpness setting:
+    # xl_base stores data from core.load_model(model_filename)
     xl_base.unet.model_options['sampler_cfg_function'] = cfg_patched
-    xl_base.unet.model_options['model_function_wrapper'] = patched_model_function
 
-    # Applies some black-magic secret sauce to the CFG value: 
+    # xl_base_patched is xl_base that has been modified by freeu and CLIP skip.
     xl_base_patched.unet.model_options['sampler_cfg_function'] = cfg_patched
-    xl_base_patched.unet.model_options['model_function_wrapper'] = patched_model_function
-
-    if xl_refiner is not None:
-        xl_refiner.unet.model_options['sampler_cfg_function'] = cfg_patched
-        xl_refiner.unet.model_options['model_function_wrapper'] = patched_model_function
 
     return
 

@@ -88,11 +88,14 @@ def worker():
         uov_method, uov_input_image, outpaint_selections, inpaint_input_image, \
         use_style_iterator, input_gallery, revision_gallery, keep_input_names = task
 
+        # Extract outpaint's selections into a list:
         outpaint_selections = [o.lower() for o in outpaint_selections]
 
         loras = [(l1, w1), (l2, w2), (l3, w3), (l4, w4), (l5, w5)]
         loras_user_raw_input = copy.deepcopy(loras)
 
+        # If Style Iterator is enabled, grab all available styles from sdxl_styles directory
+        # to iteratively combine them with the currently selected styles for image generation.
         if use_style_iterator:
             style_iterator_pool = style_keys.copy()
             for s in style_selections:
@@ -516,8 +519,10 @@ def worker():
                 execution_time = time.perf_counter() - execution_start_time
                 print(f'Diffusion time: {execution_time:.2f} seconds')
     
+                # Metadata to write to image EXIF data and history log:
                 metadata = {
-                    'prompt': raw_prompt, 'negative_prompt': raw_negative_prompt, 'styles': task['style_selections'],
+                    'prompt': raw_prompt, 'negative_prompt': raw_negative_prompt, 
+                    'styles': task['style_selections'],
                     'real_prompt': task['positive'], 'real_negative_prompt': task['negative'],
                     'seed': task['task_seed'], 'width': width, 'height': height,
                     'sampler': sampler_name, 'scheduler': scheduler, 'performance': performance,
@@ -527,32 +532,40 @@ def worker():
                     'l1': l1, 'w1': w1, 'l2': l2, 'w2': w2, 'l3': l3, 'w3': w3,
                     'l4': l4, 'w4': w4, 'l5': l5, 'w5': w5, 'freeu': freeu,
                     'img2img': img2img_mode, 'revision': revision_mode,
-                    'positive_prompt_strength': positive_prompt_strength, 'negative_prompt_strength': negative_prompt_strength,
+                    'positive_prompt_strength': positive_prompt_strength, 
+                    'negative_prompt_strength': negative_prompt_strength,
                     'control_lora_canny': control_lora_canny, 'control_lora_depth': control_lora_depth,
                     'prompt_expansion': use_expansion
                 }
                 if freeu:
                     metadata |= {
-                        'freeu_b1': freeu_b1, 'freeu_b2': freeu_b2, 'freeu_s1': freeu_s1, 'freeu_s2': freeu_s2
+                        'freeu_b1': freeu_b1, 'freeu_b2': freeu_b2, 'freeu_s1': freeu_s1, 
+                        'freeu_s2': freeu_s2
                     }
                 if img2img_mode:
                     metadata |= {
-                        'start_step': start_step, 'denoise': denoise, 'scale': img2img_scale, 'input_image': input_image_filename
+                        'start_step': start_step, 'denoise': denoise, 'scale': img2img_scale, 
+                        'input_image': input_image_filename
                     }
                 if revision_mode:
                     metadata |= {
-                        'revision_strength_1': revision_strength_1, 'revision_strength_2': revision_strength_2,
-                        'revision_strength_3': revision_strength_3, 'revision_strength_4': revision_strength_4,
+                        'revision_strength_1': revision_strength_1, 
+                        'revision_strength_2': revision_strength_2,
+                        'revision_strength_3': revision_strength_3, 
+                        'revision_strength_4': revision_strength_4,
                         'revision_images': revision_images_filenames
                     }
                 if control_lora_canny:
                     metadata |= {
                         'canny_start': canny_start,
-                        'canny_stop': canny_stop, 'canny_strength': canny_strength, 'canny_model': canny_model, 'canny_input': input_image_filename
+                        'canny_stop': canny_stop, 'canny_strength': canny_strength, 
+                        'canny_model': canny_model, 'canny_input': input_image_filename
                     }
                 if control_lora_depth:
                     metadata |= {
-                        'depth_start': depth_start, 'depth_stop': depth_stop, 'depth_strength': depth_strength, 'depth_model': depth_model, 'depth_input': input_image_filename
+                        'depth_start': depth_start, 'depth_stop': depth_stop, 
+                        'depth_strength': depth_strength, 'depth_model': depth_model, 
+                        'depth_input': input_image_filename
                     }
                 metadata |= { 'software': fooocus_version.full_version }
     
@@ -576,29 +589,36 @@ def worker():
                         ('CFG & CLIP Skips', (cfg, base_clip_skip, refiner_clip_skip)),
                         ('Base Model', base_model_name),
                         ('Refiner Model', refiner_model_name),
-                        ('FreeU', (freeu, freeu_b1, freeu_b2, freeu_s1, freeu_s2) if freeu else (freeu)),
-                        ('Image-2-Image', (img2img_mode, start_step, denoise, img2img_scale, input_image_filename) if img2img_mode else (img2img_mode)),
-                        ('Revision', (revision_mode, revision_strength_1, revision_strength_2, revision_strength_3,
-                            revision_strength_4, revision_images_filenames) if revision_mode else (revision_mode)),
+                        ('FreeU', (freeu, freeu_b1, freeu_b2, freeu_s1, freeu_s2) 
+                                    if freeu else (freeu)),
+                        ('Image-2-Image', (img2img_mode, start_step, denoise, img2img_scale,
+                                           input_image_filename) if img2img_mode else (img2img_mode)),
+                        ('Revision', (revision_mode, revision_strength_1, revision_strength_2,
+                                      revision_strength_3,revision_strength_4, 
+                                      revision_images_filenames) if revision_mode else (revision_mode)),
                         ('Prompt Strengths', (positive_prompt_strength, negative_prompt_strength)),
-                        ('Canny', (control_lora_canny, canny_start, canny_stop,
-                            canny_strength, canny_model, input_image_filename) if control_lora_canny else (control_lora_canny)),
-                        ('Depth', (control_lora_depth, depth_start, depth_stop, depth_strength, depth_model, input_image_filename) if control_lora_depth else (control_lora_depth))
+                        ('Canny', (control_lora_canny, canny_start, canny_stop, canny_strength,
+                                    canny_model, input_image_filename) 
+                                    if control_lora_canny else (control_lora_canny)),
+                        ('Depth', (control_lora_depth, depth_start, depth_stop, depth_strength,
+                                   depth_model, input_image_filename) 
+                                    if control_lora_depth else (control_lora_depth))
                     ]
                     for n, w in loras:
                         if n != 'None':
                             d.append((f'LoRA [{n}] weight', w))
                     d.append(('Software', fooocus_version.full_version))
                     d.append(('Execution Time', f'{execution_time:.2f} seconds'))
-                    log(x, d, 3, metadata_string, save_metadata_json, save_metadata_image, keep_input_names, input_image_filename, output_format)
+                    log(x, d, 3, metadata_string, save_metadata_json, save_metadata_image, 
+                        keep_input_names, input_image_filename, output_format)
 
                 results += imgs
             except comfy.model_management.InterruptProcessingException as e:
                 print('User stopped')
                 break
 
-        # Pass all results to output[] which is read by webui.py in an infinite loop with        
-        # the following: if len(worker.outputs) > 0
+        # Pass all results to output[] which is read by webui.py in an infinite loop that
+        # checks if len(worker.outputs) > 0
         outputs.append(['metadatas', metadata_strings])
         outputs.append(['results', results])
 

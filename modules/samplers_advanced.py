@@ -31,8 +31,6 @@ class KSamplerBasic:
         self.denoise = denoise
         self.model_options = model_options
         
-        self.model_denoise = CFGNoisePredictor(model)
-
         # If using a V (velocity) prediction model (SD2.x, etc.), then use a V-denoiser:
         self.model_wrap = comfy.samplers.wrap_model(model)
 

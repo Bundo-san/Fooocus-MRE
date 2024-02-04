@@ -166,7 +166,8 @@ def calculate_weight_patched(self, patches, weight, key):
 
     return weight
 
-
+# Modify the CFG values by applying sharpness to the image.
+# Called by sampling_function() in comfy/samplers.py.
 def cfg_patched(args):
     global cfg_x0, cfg_s
     positive_eps = args['cond'].clone()
@@ -184,14 +185,6 @@ def cfg_patched(args):
     cond = eps_degraded_weighted * cfg_s + cfg_x0
 
     return uncond + (cond - uncond) * cond_scale
-
-def patched_model_function(func, args):
-    global cfg_cin
-    x = args['input']
-    t = args['timestep']
-    c = args['c']
-    # is_uncond = torch.tensor(args['cond_or_uncond'])[:, None, None, None].to(x) * 5e-3
-    return func(x, t, **c)
 
 
 def text_encoder_device_patched():

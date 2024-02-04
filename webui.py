@@ -40,7 +40,8 @@ def generate_clicked(*args):
         gr.update(value=None), \
         gr.update()
 
-    # Toss all the information needed to generate an image into the worker thread's buffer:
+    # Toss all the information needed to generate an image into the worker thread's buffer.
+    # Look at async_worker.py to see how the information are used:
     worker.buffer.append(list(args))
     finished = False
 
