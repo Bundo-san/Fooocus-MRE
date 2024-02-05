@@ -366,6 +366,13 @@ with shared.gradio_root:
                         gr.HTML('Outpaint Expansion (<a href="https://github.com/lllyasviel/Fooocus/discussions/414">\U0001F4D4 Document</a>):')
                         outpaint_selections = gr.CheckboxGroup(choices=['Left', 'Right', 'Top', 'Bottom'], value=[], label='Outpaint', show_label=False, container=False)
                         gr.HTML('* \"Inpaint or Outpaint\" is powered by the sampler \"DPMPP Fooocus Seamless 2M SDE Karras Inpaint Sampler\" (beta)')
+                    with gr.TabItem(label='Interrogate') as desc_tab:
+                        with gr.Row():
+                            with gr.Column():
+                                desc_input_image = grh.Image(label='Drag any image to here', source='upload', type='numpy')
+                            with gr.Column():
+                                desc_btn = gr.Button(value='Describe this Image into Prompt')
+                                gr.HTML('<a href="https://github.com/lllyasviel/Fooocus/discussions/1363" target="_blank">\U0001F4D4 Document</a>')
 
             input_image_checkbox.change(lambda x: gr.update(visible=x), inputs=input_image_checkbox, outputs=image_input_panel, queue=False,
                                         _js="(x) => {if(x){setTimeout(() => window.scrollTo({ top: window.scrollY + 500, behavior: 'smooth' }), 50);}else{setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);} return x}")
@@ -672,11 +679,19 @@ with shared.gradio_root:
             .then(fn=get_current_links, inputs=None, outputs=links) \
             .then(fn=None, _js='playNotification')
 
+        # Audio Notification
         notification_file = 'notification.ogg' if exists('notification.ogg') else 'notification.mp3' if exists('notification.mp3') else None
         if notification_file != None:
             gr.Audio(interactive=False, value=notification_file, elem_id='audio_notification', visible=False)
 
+        # Interrogate Image Handler
+        def trigger_describe(img):
+            from extras.wd14tagger import default_interrogator as default_interrogator_anime
+            return default_interrogator_anime(img)
+        desc_btn.click(trigger_describe, inputs=[desc_input_image], 
+                       outputs=[prompt], show_progress=True, queue=True)
 
+# Launch Gradio App
 app = gr.mount_gradio_app(app, shared.gradio_root, '/')
 shared.gradio_root.launch(inbrowser=False, server_name=args.listen, server_port=args.port, share=args.share,
     auth=check_auth if args.share and auth_enabled else None, allowed_paths=[modules.path.temp_outputs_path])

@@ -274,6 +274,7 @@ def get_previewer(device, latent_format, is_sdxl=True):
             x_sample = x_sample.cpu().numpy().clip(0, 255).astype(np.uint8)
             return x_sample
 
+    # If TAESD approx previewer is not set yet AND we're dealing with SD1.5/2.0:
     if taesd is None and not is_sdxl:
         from latent_preview import TAESD, TAESDPreviewerImpl
         from modules.path import vae_approx_path
