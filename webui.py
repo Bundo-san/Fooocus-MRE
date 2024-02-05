@@ -572,9 +572,9 @@ with shared.gradio_root:
                     custom_switch = gr.Slider(label='Custom Switch', minimum=0.2, maximum=1.0, step=0.01, value=settings['custom_switch'], visible=False)
                 cfg = gr.Slider(label='CFG', minimum=1.0, maximum=20.0, step=0.1, value=settings['cfg'])
                 base_clip_skip = gr.Slider(label='Base CLIP Skip', minimum=-10, maximum=-1, step=1, value=settings['base_clip_skip'])
-                refiner_clip_skip = gr.Slider(label='Refiner CLIP Skip', minimum=-10, maximum=-1, step=1, value=settings['refiner_clip_skip'])
+                refiner_clip_skip = gr.Slider(label='Refiner CLIP Skip', minimum=-10, maximum=-1, step=1, value=settings['refiner_clip_skip'], visible=False)
                 sampler_name = gr.Dropdown(label='Sampler', choices=['dpmpp_3m_sde_gpu', 
-                    'dpmpp_3m_sde','dpmpp_2m', 'heun', 'ddpm', 'ddim', 'uni_pc', 'uni_pc_bh2'], value=settings['sampler'])
+                    'dpmpp_3m_sde', 'dpmpp_2m_sde', 'dpmpp_2m', 'heun', 'ddpm', 'ddim', 'uni_pc', 'uni_pc_bh2'], value=settings['sampler'])
                 scheduler = gr.Dropdown(label='Scheduler', choices=['karras', 'exponential', 'sgm_uniform', 'simple', 'ddim_uniform'], value=settings['scheduler'])
                 sharpness = gr.Slider(label='Sampling Sharpness', minimum=0.0, maximum=5.0, step=0.01, value=settings['sharpness'])
 
